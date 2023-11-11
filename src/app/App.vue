@@ -1,6 +1,6 @@
 <template>
     <div>
-      <navbar></navbar>
+      <navbar v-if="isLoggedIn"></navbar>
       <div class="jumbotron">
         <div class="container">
           <div class="row">
@@ -15,17 +15,22 @@
   </template>
   
   <script>
-  import { mapState, mapActions } from 'vuex'
+  import { mapState, mapActions, mapGetters } from 'vuex'
   import Navbar from '../components/Navbar.vue'
-  
+import { userInfo } from 'os';
+ 
   export default {
     name: 'app',
+
     components: {
       Navbar
     },
     computed: {
       ...mapState({
-        alert: state => state.alert
+        alert: state => state.alert,
+      }),
+      ...mapGetters({
+         isLoggedIn: 'account/isLoggedIn'
       })
     },
     methods: {

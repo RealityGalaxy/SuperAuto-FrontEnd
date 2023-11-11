@@ -75,9 +75,14 @@ const mutations = {
     }
 };
 
+const getters = {
+    isLoggedIn: state => !!state.user
+  };
+
 export const account = {
     namespaced: true,
     state,
     actions,
-    mutations
+    mutations,
+    getters
 };
