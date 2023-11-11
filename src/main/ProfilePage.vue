@@ -8,22 +8,22 @@
       <input 
           v-model="editableUserData.firstName"
           :placeholder="userData.firstName"
-          :disabled="editMode">
+          :disabled="!editMode">
 
       <input 
           v-model="editableUserData.lastName"
           :placeholder="userData.lastName"
-          :disabled="editMode">
+          :disabled="!editMode">
 
       <input
           v-model="editableUserData.email"
           :placeholder="userData.email"
-          :disabled="editMode">
+          :disabled="!editMode">
 
       <input
           v-model="editableUserData.phoneNumber"
           :placeholder="userData.phoneNumber"
-          :disabled="editMode">
+          :disabled="!editMode">
 
       <template v-if="!editMode">
           <button @click="editMode = true">Redaguoti</button>
