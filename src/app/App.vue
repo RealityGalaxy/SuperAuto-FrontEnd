@@ -1,36 +1,44 @@
 <template>
-    <div class="jumbotron">
+    <div>
+      <navbar></navbar>
+      <div class="jumbotron">
         <div class="container">
-            <div class="row">
-                <div class="col-sm-6 offset-sm-3">
-                    <div v-if="alert.message" :class="`alert ${alert.type}`">{{alert.message}}</div>
-                    <router-view></router-view>
-                </div>
+          <div class="row">
+            <div class="col-sm-6 offset-sm-3">
+              <div v-if="alert.message" :class="`alert ${alert.type}`">{{alert.message}}</div>
+              <router-view></router-view>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</template>
-
-<script>
-import { mapState, mapActions } from 'vuex'
-
-export default {
+  </template>
+  
+  <script>
+  import { mapState, mapActions } from 'vuex'
+  import Navbar from '../components/Navbar.vue'
+  
+  export default {
     name: 'app',
+    components: {
+      Navbar
+    },
     computed: {
-        ...mapState({
-            alert: state => state.alert
-        })
+      ...mapState({
+        alert: state => state.alert
+      })
     },
     methods: {
-        ...mapActions({
-            clearAlert: 'alert/clear' 
-        })
+      ...mapActions({
+        clearAlert: 'alert/clear'
+      })
     },
     watch: {
-        $route (to, from){
-            // clear alert on location change
-            this.clearAlert();
-        }
-    } 
-};
-</script>
+      $route(to, from) {
+        // clear alert on location change
+        this.clearAlert();
+      }
+    }
+  };
+  </script>
+  
