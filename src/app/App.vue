@@ -1,5 +1,6 @@
 <template>
     <div class="jumbotron">
+        <navbar/>
         <div class="container">
             <div class="row">
                 <div class="col-sm-6 offset-sm-3">
@@ -13,6 +14,7 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import Navbar from '../components/Navbar.vue'
 
 export default {
     name: 'app',
