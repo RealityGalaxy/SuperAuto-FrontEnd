@@ -17,7 +17,7 @@
   <script>
   import { mapState, mapActions, mapGetters } from 'vuex'
   import Navbar from '../components/Navbar.vue'
-import { userInfo } from 'os';
+  import { userInfo } from 'os';
  
   export default {
     name: 'app',

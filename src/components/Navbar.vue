@@ -3,6 +3,10 @@
       <span class="nav-brand">SuperAuto.pl</span>
       <router-link to="/">Pagrindinis</router-link>
       <router-link to="/profile">Profilis</router-link>
+      <router-link to="/newentry">Naujas skelbimas</router-link>
+      <router-link to="/search">Skelbimai</router-link>
+      <router-link to="/newticket">Pagalba</router-link>
+      <router-link to="/forum">Forumas</router-link>
       <!-- Add other links as needed -->
     </nav>
   </template>

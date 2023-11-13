@@ -2,27 +2,31 @@
   <div class="profile-page">
     <h1>Jūsų profilis</h1>
     <div class="user-info">
-      <p><strong>Slapyvardis:</strong> {{ userData.username }}</p>
-      <p><strong>Registracijos data:</strong> {{ userData.registrationDate }}</p>
+      <p><strong>Slapyvardis:</strong> {{ account.user.username }}</p>
+      <div>
+        <span><strong>Balansas:</strong> {{ account.user.balance ? account.user.balance : "0.00€" }}</span>
+        <router-link to="/profile/balance">Papildyti</router-link>
+      </div>
+      <p><strong>Registracijos data:</strong> {{ userRegistrationDate }}</p>
       
       <input 
           v-model="editableUserData.firstName"
-          :placeholder="userData.firstName"
+          :placeholder="userFirstName"
           :disabled="!editMode">
 
       <input 
           v-model="editableUserData.lastName"
-          :placeholder="userData.lastName"
+          :placeholder="userLastName"
           :disabled="!editMode">
 
       <input
           v-model="editableUserData.email"
-          :placeholder="userData.email"
+          :placeholder="userEmail"
           :disabled="!editMode">
 
       <input
           v-model="editableUserData.phoneNumber"
-          :placeholder="userData.phoneNumber"
+          :placeholder="userPhoneNumber"
           :disabled="!editMode">
 
       <template v-if="!editMode">
@@ -39,18 +43,32 @@
     <div class="automobiliai-section">
       <h2>Jūsų automobiliai</h2>
       <!-- Display cars here -->
-      <button @click="newCar()">Add Car</button>
+      <router-link to="/profile/car">Markinė Modelinė</router-link>
+      <br><br>
+      <router-link to="/profile/newcar">Pridėti automobilį</router-link>
     </div>
 
     <div class="pagalbos-bilietai-section">
       <h2>Jūsų pagalbos bilietai</h2>
-      <!-- Display tickets here -->
+      <router-link to="/profile/ticket">Bilietas 1 - Kaip pašalinti skelbimą?</router-link>
     </div>
-    <button @click="getStatistics()">Gauti statistikas</button>
+
+    <div class="pagalbos-bilietai-section">
+      <h2>Jūsų nuomos užklausos</h2>
+      <router-link to="/profile/request">Užklausa 1 - Markinė Modelinė</router-link>
+    </div>
+    
+
+    <br><br>
+    <router-link to="/profile/stats">Gauti statistikas</router-link>
   </div>
 </template>
 
+
+
 <script>
+import { mapState, mapActions } from 'vuex'
+
 export default {
   data() {
     return {
@@ -60,6 +78,27 @@ export default {
       editableUserData: {},
       editMode: false
     };
+  },
+  computed:{
+    ...mapState({
+            account: state => state.account,
+            users: state => state.users.all
+        }),
+    userFirstName(){
+      return this.account.user.firstName ? this.account.user.firstName : "Vardas";
+    },
+    userLastName(){
+      return this.account.user.lastName ? this.account.user.lastName : "Pavardė";
+    },
+    userRegistrationDate(){
+      return this.account.user.registrationDate ? this.account.user.registrationDate : "????-??-??";
+    },
+    userEmail(){
+      return this.account.user.email ? this.account.user.email : "El. paštas";
+    },
+    userPhoneNumber(){
+      return this.account.user.phoneNumber ? this.account.user.phoneNumber : "Telefono nr.";
+    }
   },
   methods: {
     updateUserInfo() {
@@ -89,7 +128,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 /* Add your CSS styling here */
 .profile-page {
   /* Styles for the profile page */
