@@ -1,20 +1,29 @@
 <template>
-  <div class="forum-post-creation-page">
+  <div class="forum-post-creation-page" v-if="account.user.type != 'admin'">
     <h1>Naujas pagalbos bilietas</h1>
     <form @submit.prevent="submitPost">
       <div class="form-group">
         <label for="post-title">Trumpas problemos aprašas:</label>
-        <input id="post-title" v-model="post.title" required>
+        <input id="post-title" v-model="post.Title" required>
       </div>
 
       <div class="form-group">
         <label for="post-content">Turinys:</label>
-        <textarea id="post-content" v-model="post.content" rows="10" required></textarea>
+        <textarea id="post-content" v-model="post.Content" rows="10" required></textarea>
       </div>
 
       <button type="submit">Pateikti bilietą</button>
       <router-link to="/profile/ticket">Bilietas</router-link>
     </form>
+  </div>
+  <div v-else>
+    <h1>Administratoriaus puslapis</h1>
+    <h2>Neatsakyti bilietai:</h2>
+    <div class="post-item" v-for="ticket in tickets" :key="ticket.id">
+      <div class="post-info">
+        <router-link :to="'/help/ticket/'+ticket.id">{{ ticket.title }}</router-link>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -22,28 +31,17 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { ticketService } from '../_services';
 
 export default {
   data() {
     return {
       showFilterPopup: false,
       post: {
-        title: '',
-        content: ''
+        Title: '',
+        Content: ''
       },
-      cars: [
-        {
-          imageUrl: 'https://static8.depositphotos.com/1010338/960/i/950/depositphotos_9600579-stock-photo-man-driving-imaginary-car.jpg',
-          make:'Kap pastaisyti dusliarkią?',
-          model:'Modelinė',
-          price:'piatras',
-          mileage:'man niaisku'
-        }
-      ], // This should be fetched from your data source
-      userData: {
-        // Fetch or initialize user data here
-      },
-      balanceUpdateInfo: {}
+      tickets: []
     };
   },
   computed:{
@@ -52,23 +50,28 @@ export default {
             users: state => state.users.all
         }),
   },
-  methods: {
-    updateBalance() {
-      // Implement user info update logic
+  async created() {
+    if(this.account.user.type == 'admin'){
+      this.tickets = await ticketService.getAll().then(tickets => {
+        return tickets.filter(ticket => ticket.status != 'answered' && ticket.status != 'closed');
+      });
     }
   },
-  async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
-  },
   methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
-    },
-    addCar() {
-          //Route to add car page
-          
+    submitPost() {
+      if (!this.post.Title || !this.post.Content) {
+        alert("Užpildykite visus laukus");
+        return;
+      }
+      this.post.Author = this.account.user.id;
+
+      ticketService.create(this.post)
+                .then(post => {
+                this.$router.push('/help/ticket/' + post.id);
+            }, error => {
+                this.error = error;
+                this.loading = false;
+            });
     }
   }
 };

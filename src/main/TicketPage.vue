@@ -7,6 +7,26 @@
     <div class="post-content">
       {{ post.content }}
     </div>
+
+    <!--display all ticket answers-->
+    <div class="post-comments">
+      <div class="comment-item" v-for="answer in answers" :key="answer.id">
+        <br>
+        <div class="comment-info">
+          <h2>{{ answer.author }}</h2>
+          <p>{{ answer.content }}</p>
+        </div>
+      </div>
+    </div>
+    <br><br>
+
+    <div class="form-group" v-if="post.status != 'closed'">
+        <p>Parašykite naują atsakymą:</p>
+        <textarea id="post-content" v-model="newAns.Content" rows="4" required></textarea>
+        <button type="submit" @click="submitAnswer()">Pateikti atsakymą</button>
+    </div>
+
+    <button v-if="post.status != 'closed' && account.user.type == 'admin'" @click="closeTicket()">Uždaryti bilietą</button>
     
     <router-link to="/profile">Atgal į profilį</router-link>
   </div>
@@ -16,30 +36,22 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { userService } from '../_services';
+import { ticketService } from '../_services'
+import { answerService } from '../_services';
 
 export default {
   data() {
     return {
-      showFilterPopup: false,
       post: {
-        title: 'Kaip pašalinti skelbimą?',
-        author: 'Naujokas',
-        content: 'Sveiki, man nepavyksta pašalinti skelbimo, kaip tai padaryti?',
-        createdAt: '2023-11-10' // ISO 8601 format
+        title: '-',
+        author: '-',
+        content: '-'
       },
-      cars: [
-        {
-          imageUrl: 'https://static8.depositphotos.com/1010338/960/i/950/depositphotos_9600579-stock-photo-man-driving-imaginary-car.jpg',
-          make:'Kap pastaisyti dusliarkią?',
-          model:'Modelinė',
-          price:'piatras',
-          mileage:'man niaisku'
-        }
-      ], // This should be fetched from your data source
-      userData: {
-        // Fetch or initialize user data here
+      newAns:{
+        Content: ''
       },
-      balanceUpdateInfo: {}
+      answers: []
     };
   },
   computed:{
@@ -48,23 +60,62 @@ export default {
             users: state => state.users.all
         }),
   },
-  methods: {
-    updateBalance() {
-      // Implement user info update logic
-    }
-  },
   async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
+    this.getTicketData(this.$route.params.id);
+    this.getAllAnswers(this.$route.params.id);
   },
   methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
+    async getTicketData(id){
+      const data = await ticketService.getById(id);
+      this.post.title = data.title;
+      this.post.content = data.content;
+      this.post.id = data.id;
+      this.post.authorid = data.author;
+      this.post.status = data.status;
+      const name = await this.getUsername(data.author);
+      this.post.author = name;
     },
-    addCar() {
-          //Route to add car page
-          
+    async getAllAnswers(id){
+      answerService.getAll().then(answers => {
+        this.answers = answers.filter(answer => answer.ticket == id);
+        for(let i = 0; i < this.answers.length; i++){
+          this.getUsername(this.answers[i].author).then(username => {
+            this.answers[i].author = username;
+          });
+        }
+      });
+    },
+    async getUsername(id){
+      const user = await userService.getById(id);
+      return user.username;
+    },
+    async getEmail(id){
+      const user = await userService.getById(id);
+      return user.email;
+    },
+    async submitAnswer(){
+      this.newAns.Author = this.account.user.id;
+      this.newAns.Ticket = this.post.id;
+      const email = await this.getEmail(this.post.authorid);
+      answerService.create(this.newAns).then(ans => {
+        var toAdd = {
+          author: this.account.user.username,
+          content: this.newAns.Content,
+          id: ans.id
+        }
+        this.answers.push(toAdd);
+      });
+    },
+    closeTicket(){
+      if(confirm("Ar tikrai norite uždaryti bilietą?")){
+        var toSend = {
+          id: this.post.id,
+          status: 'closed',
+        }
+        ticketService.update(toSend).then(() => {
+          this.post.status = 'closed';
+        });
+      }
     }
   }
 };

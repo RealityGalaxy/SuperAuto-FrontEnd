@@ -5,16 +5,15 @@
       <p>Pradžios data:</p>
       <input
           type = "date" 
-          v-model="balanceUpdateInfo.startDate">
+          v-model="request.start_Date">
 
       <p>Pabaigos data:</p>
       <input 
           type = "date"
-          v-model="balanceUpdateInfo.endDate">    
+          v-model="request.end_Date">    
           
     </div>
-    <button @click="getStats()">Pateikti užklausą</button>
-    <router-link to="/profile/request">užklausa</router-link>
+    <button @click="createRequest()">Pateikti užklausą</button>
   </div>
 </template>
 
@@ -22,14 +21,20 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { requestService } from '../_services';
+import { carService } from '../_services';
+import { rentadService } from '../_services';
 
 export default {
   data() {
     return {
-      userData: {
-        // Fetch or initialize user data here
-      },
-      balanceUpdateInfo: {}
+      request: {
+        start_Date: Date.now,
+        end_Date: Date.now,
+        car: -1,
+        owner: -1,
+        renter: -1
+      }
     };
   },
   computed:{
@@ -38,23 +43,27 @@ export default {
             users: state => state.users.all
         }),
   },
-  methods: {
-    getStats() {
-      // Implement user info update logic
-    }
-  },
   async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
+    const ad = await rentadService.getById(parseInt(this.$route.params.id));
+    const car = await carService.getById(ad.car);
+    this.request.car = car.id;
+    this.request.renter = this.account.user.id;
+    this.request.owner = car.owner;
   },
   methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
-    },
-    addCar() {
-          //Route to add car page
-          
+    async createRequest(){
+      const ad = await rentadService.getById(parseInt(this.$route.params.id));
+      const car = await carService.getById(ad.car);
+      this.request.car = car.id;
+      this.request.owner = car.owner;
+      requestService.create(this.request).then(
+        request => {
+          this.$router.push('/profile');
+        },
+        error => {
+          console.log(error);
+        }
+      );
     }
   }
 };

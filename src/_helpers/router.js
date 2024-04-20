@@ -32,16 +32,55 @@ export const router = new Router({
     { path: '/profile/stats', component: StatsPage },
     { path: '/search', component: SearchPage },
     { path: '/profile/newcar', component: NewCarPage },
-    { path: '/profile/car', component: CarPage },
+    {
+      path: '/car/:id',
+      name: 'Car',
+      component: CarPage
+    },
+    {
+      path: '/car/edit/:id',
+      name: 'Edit Car',
+      component: NewCarPage
+    },
     { path: '/newentry', component: NewEntryPage },
-    { path: '/entry', component: EntryPage },
+    {
+      path: '/entry/:type/:id',
+      name: 'Ad Entry',
+      component: EntryPage
+    },
+    {
+      path: '/entry/:type/edit/:id',
+      name: 'Ad Entry Edit',
+      component: NewEntryPage
+    },
     { path: '/forum', component: ForumPage },
     { path: '/forum/newpost', component: NewPostPage },
-    { path: '/forum/post', component: PostPage },
-    { path: '/profile/newrequest', component: NewRequestPage },
-    { path: '/profile/request', component: RequestPage },
-    { path: '/newticket', component: NewTicketPage },
-    { path: '/profile/ticket', component: TicketPage },
+    {
+      path: '/forum/post/:id',
+      name: 'Post',
+      component: PostPage
+    },
+    {
+      path: '/forum/post/edit/:id',
+      name: 'Edit Post',
+      component: NewPostPage
+    },
+    {
+      path: '/request/:mode/:id',
+      name: 'New Request',
+      component: NewRequestPage
+    },
+    {
+      path: '/profile/request/:id',
+      name: 'Request',
+      component: RequestPage
+    },
+    { path: '/help/new', component: NewTicketPage },
+    {
+      path: '/help/ticket/:id',
+      name: 'Help Ticket',
+      component: TicketPage
+    },
     { path: '/register', component: RegisterPage },
 
     // otherwise redirect to home

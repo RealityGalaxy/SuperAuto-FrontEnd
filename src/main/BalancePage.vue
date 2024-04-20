@@ -2,10 +2,10 @@
   <div class="profile-page">
     <h1>Balanso papildymas</h1>
     <div class="user-info">
-      <p><strong>Dabartinis balansas:</strong> {{ account.user.balance ? account.user.balance : "0.00€"}}</p>
+      <p><strong>Dabartinis balansas:</strong> {{ account.user.balance ? account.user.balance : "0.00"}}€</p>
 
       <input 
-          v-model="balanceUpdateInfo.balance"
+          v-model.number="balanceUpdateInfo.balance"
           :placeholder="0.00">
           <button @click="updateBalance()">Pildyti balansą</button>
     </div>
@@ -18,13 +18,12 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { userService } from '../_services'
+import { billService } from '../_services'
 
 export default {
   data() {
     return {
-      userData: {
-        // Fetch or initialize user data here
-      },
       balanceUpdateInfo: {}
     };
   },
@@ -35,23 +34,36 @@ export default {
         }),
   },
   methods: {
+    displayError(message) {
+      alert(message);
+    },
     updateBalance() {
-      // Implement user info update logic
+      if(!this.balanceUpdateInfo.balance || this.balanceUpdateInfo.balance < 0){
+        displayError("Įveskite teigiamą sumą");
+        return;
+      }
+      userService.update({id: this.account.user.id, balance: this.balanceUpdateInfo.balance+this.account.user.balance})
+          .then(
+              () => {
+                  var bill = {
+                    payer: this.account.user.id,
+                    sum: this.balanceUpdateInfo.balance,
+                    type: 'refill'
+                  }
+                  billService.create(bill);
+                  this.account.user.balance += this.balanceUpdateInfo.balance;
+                  localStorage.setItem('user', JSON.stringify(this.account.user));
+                  this.$router.push('/profile');
+              },
+              error => {
+                  this.error = error;
+                  this.loading = false;
+              }
+          );
     }
   },
   async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
-  },
-  methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
-    },
-    addCar() {
-          //Route to add car page
-          
-    }
+    //Nothing again
   }
 };
 </script>

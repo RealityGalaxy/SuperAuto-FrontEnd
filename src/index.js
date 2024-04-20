@@ -1,5 +1,7 @@
+import "@babel/polyfill";
 import Vue from 'vue';
 import VeeValidate from 'vee-validate';
+
 
 import { store } from './_store';
 import { router } from './_helpers';

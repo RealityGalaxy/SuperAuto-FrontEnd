@@ -3,18 +3,29 @@
       <span class="nav-brand">SuperAuto.pl</span>
       <router-link to="/">Pagrindinis</router-link>
       <router-link to="/profile">Profilis</router-link>
-      <router-link to="/newentry">Naujas skelbimas</router-link>
+      <router-link to="/newentry" v-if="account.user.type != 'admin'">Naujas skelbimas</router-link>
       <router-link to="/search">Skelbimai</router-link>
-      <router-link to="/newticket">Pagalba</router-link>
+      <router-link to="/help/new">Pagalba</router-link>
       <router-link to="/forum">Forumas</router-link>
       <!-- Add other links as needed -->
     </nav>
   </template>
   
+
+  
   <script>
+
+  import { mapState, mapActions } from 'vuex'
+
   export default {
     name: 'Navbar',
-    // Any additional script logic for your navbar
+    // Any additional script logic for your navbar,
+    computed:{
+      ...mapState({
+              account: state => state.account,
+              users: state => state.users.all
+          }),
+    }
   };
   </script>
   

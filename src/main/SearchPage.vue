@@ -75,9 +75,9 @@
             <select id="filter-state" v-model="filters.state">
               <option value="">-</option>
               <option value="perfect">Be defektų</option>
-              <option value="minimal defects">Minimalūs gedimai</option>
-              <option value="totaled">Daužta</option>
-              <option value="serious problems">Rimti gedimai</option>
+              <option value="minimal_damage">Minimalūs gedimai</option>
+              <option value="totalled">Daužta</option>
+              <option value="serious_damage">Rimti gedimai</option>
             </select>
           </div>
 
@@ -95,13 +95,14 @@
     </div>
 
     <div class="car-list">
-      <div v-for="car in cars" :key="car.id" class="car-item">
-        <img :src="car.imageUrl" alt="Car Image" class="car-image">
+      <div v-for="ad in filteredAds" :key="ad.carObj.id+'-'+ad.id" class="car-item">
+        <img :src="ad.carObj.image" alt="Car Image" class="car-image">
         <div class="car-info">
           <h3>
-      <router-link to="/entry">{{ car.make }} {{ car.model }}</router-link></h3>
-          <p>Kaina: {{ car.price }}</p>
-          <p>{{ car.mileage }}</p>
+      <router-link :to="'/entry/'+ad.type+'/'+ad.id">{{ ad.carObj.make }} {{ ad.carObj.model }}</router-link></h3>
+          <p>Kaina: {{ ad.price }}€</p>
+          <p v-if="ad.type =='rent'">Užstatas {{ ad.deposit }}€</p>
+          <p>{{ ad.carObj.mileage }} km - {{ ad.carObj.creation_Date }}</p>
         </div>
       </div>
     </div>
@@ -112,6 +113,8 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { rentadService, saleadService } from '../_services';
+import { carService } from '../_services';
 
 export default {
   data() {
@@ -130,19 +133,8 @@ export default {
         minPrice: null,
         maxPrice: null
       },
-      cars: [
-        {
-          imageUrl: 'https://static8.depositphotos.com/1010338/960/i/950/depositphotos_9600579-stock-photo-man-driving-imaginary-car.jpg',
-          make:'Markinė',
-          model:'Modelinė',
-          price:'-0.0€',
-          mileage:'50000 km'
-        }
-      ], // This should be fetched from your data source
-      userData: {
-        // Fetch or initialize user data here
-      },
-      balanceUpdateInfo: {}
+      allAds: [],
+      filteredAds: []
     };
   },
   computed:{
@@ -151,23 +143,88 @@ export default {
             users: state => state.users.all
         }),
   },
-  methods: {
-    updateBalance() {
-      // Implement user info update logic
-    }
-  },
   async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
+    await this.getAds();
+    this.filteredAds = [...this.allAds];
+    console.log(this.filteredAds);
   },
   methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
+    async getAds(){
+      var gottenAds = [];
+      const cars = await carService.getAll();
+      await rentadService.getAll().then(ads => {
+        ads.forEach(ad => {
+          ad.type = 'rent';
+          ad.carObj = cars.find(car => car.id === ad.car);
+        });
+        gottenAds = ads;
+      });
+      await saleadService.getAll().then(ads => {
+        ads.forEach(ad => {
+          ad.type = 'sale';
+          ad.carObj = cars.find(car => car.id === ad.car);
+        });
+        gottenAds = gottenAds.concat(ads);
+      });
+      for(var i = 0; i < gottenAds.length; i++){
+        this.allAds.push(gottenAds[i]);
+      }
     },
-    addCar() {
-          //Route to add car page
-          
+    applyFilters(){
+      this.filteredAds = this.allAds.filter(ad => {
+        var result = true;
+        if(this.filters.make !== ''){
+          result = result && ad.carObj.make.toLowerCase().includes(this.filters.make.toLowerCase());
+        }
+        if(this.filters.model !== ''){
+          result = result && ad.carObj.model.toLowerCase().includes(this.filters.model.toLowerCase());
+        }
+        if(this.filters.licensePlate !== ''){
+          result = result && ad.carObj.license_Plate.toLowerCase().includes(this.filters.licensePlate.toLowerCase());
+        }
+        if(this.filters.mileage !== null){
+          result = result && ad.carObj.mileage <= this.filters.mileage;
+        }
+        if(this.filters.gearboxType !== ''){
+          result = result && ad.carObj.gearbox_Type.toLowerCase().includes(this.filters.gearboxType.toLowerCase());
+        }
+        if(this.filters.fuelType !== ''){
+          result = result && ad.carObj.fuel_Type.toLowerCase().includes(this.filters.fuelType.toLowerCase());
+        }
+        if(this.filters.bodyType !== ''){
+          result = result && ad.carObj.body_Type.toLowerCase().includes(this.filters.bodyType.toLowerCase());
+        }
+        if(this.filters.seatCount !== null){
+          result = result && ad.carObj.seat_Count <= this.filters.seatCount;
+        }
+        if(this.filters.state !== ''){
+          result = result && ad.carObj.state.toLowerCase().includes(this.filters.state.toLowerCase());
+        }
+        if(this.filters.minPrice !== null){
+          result = result && ad.price >= this.filters.minPrice;
+        }
+        if(this.filters.maxPrice !== null){
+          result = result && ad.price <= this.filters.maxPrice;
+        }
+        return result;
+      });
+      this.showFilterPopup = false;
+      this.resetFilterValues();
+    },
+    resetFilterValues(){
+      this.filters = {
+        make: '',
+        model: '',
+        licensePlate: '',
+        mileage: null,
+        gearboxType: '',
+        fuelType: '',
+        bodyType: '',
+        seatCount: null,
+        state: '',
+        minPrice: null,
+        maxPrice: null
+      };
     }
   }
 };

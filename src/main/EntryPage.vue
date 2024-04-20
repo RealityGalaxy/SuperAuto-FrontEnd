@@ -3,23 +3,33 @@
     <div class="car-details-page">
     <div class="text-info">
       <h1>{{ car.make }} {{ car.model }}</h1>
-      <p><strong>Valstybinis numeris:</strong> {{ car.licensePlate }}</p>
+      <p><strong>Valstybinis numeris:</strong> {{ car.license_Plate }}</p>
       <p><strong>Rida:</strong> {{ car.mileage }}</p>
-      <p><strong>Pavarų dėžė:</strong> {{ car.gearboxType }}</p>
-      <p><strong>Kuro tipas:</strong> {{ car.fuelType }}</p>
-      <p><strong>Kebūlo tipas:</strong> {{ car.bodyType }}</p>
-      <p><strong>Sėdynių sk.:</strong> {{ car.seatCount }}</p>
-      <p><strong>Būklė:</strong> {{ car.state }}</p>
+      <p><strong>Pavarų dėžė:</strong> {{ transmission(car.transmission) }}</p>
+      <p><strong>Kuro tipas:</strong> {{ fuelType(car.fuel_Type) }}</p>
+      <p><strong>Kėbūlo tipas:</strong> {{ bodyType(car.body_Type) }}</p>
+      <p><strong>Sėdynių sk.:</strong> {{ car.seats }}</p>
+      <p><strong>Būklė:</strong> {{ state(car.state) }}</p>
       <p><strong>Papildoma informacija:</strong> {{ car.extraInfo }}</p>
     </div>
     <div class="car-image">
-      <img :src="car.imageUrl" alt="Car Image">
-      <p><strong>Kaina:</strong> -0.0€</p>
-      <router-link to="/profile/newrequest">Pateikti užklausą</router-link>
+      <img :src="car.image" alt="Car Image">
+      <template v-if="$route.params.type=='rent'">
+        <!--give me euro symbol-->
+        <p><strong>Kaina terminui:</strong> {{ ad.price }}€</p>
+        <p><strong>Užstatas:</strong> {{ ad.deposit }}€</p>
+        <p><strong>Terminas:</strong> {{ term(ad.term) }}</p>
+        <router-link :to="'/request/new/'+$route.params.id" v-if="ad.author!=account.user.id">Pateikti užklausą</router-link>
+      </template>
+      <template v-else>
+        <p><strong>Kaina:</strong> {{ ad.price }}€</p>
+      </template>
     </div>
   </div>
     
-    <router-link to="/profile/newcar">Redaguoti</router-link>
+    <router-link :to="'/entry/'+$route.params.type+'/edit/'+$route.params.id" v-if="ad.author==account.user.id">Redaguoti</router-link>
+    <button v-if="ad.author==account.user.id" @click="deleteAd()">Ištrinti</button>
+
   </div>
 </template>
 
@@ -27,26 +37,17 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { carService } from '../_services'
+import { rentadService } from '../_services';
+import { userService } from '../_services'
+import { saleadService } from '../_services';
+import { requestService } from '../_services';
 
 export default {
   data() {
     return {
-      car: {
-        // Example car data, replace with real data
-        make: 'Markinė',
-        model: 'Modelinė',
-        licensePlate: 'ABC123',
-        mileage: '50000',
-        gearboxType: 'Automatinė',
-        fuelType: 'Vaizduotė',
-        bodyType: 'Betūrė',
-        seatCount: 1,
-        state: 'Betkokia',
-        extraInfo: 'Kuriasi ir važiuoja',
-        imageUrl: 'https://static8.depositphotos.com/1010338/960/i/950/depositphotos_9600579-stock-photo-man-driving-imaginary-car.jpg' // Replace with actual image path
-      },
-      editableCarData: {},
-      editMode: false
+      car: {},
+      ad: {}
     };
   },
   computed:{
@@ -55,29 +56,109 @@ export default {
             users: state => state.users.all
         }),
   },
-  methods: {
-    updateUserInfo() {
-      // Implement user info update logic
-    },
-    addCar() {
-      // Logic to add a car
-    },
-    getStatistics() {
-      // Logic to get statistics
-    }
-  },
   async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
+    const data = await this.fetchAdData(this.$route.params.id, this.$route.params.type);
+    this.ad = data;
+    this.fetchCarData(this.ad.car);
   },
   methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
+    async fetchAdData(id, type){
+      type = type.toLowerCase();
+      if(type == 'rent'){
+        return rentadService.getById(id);
+      }else if(type == 'sale'){
+        return saleadService.getById(id);
+      }
     },
-    addCar() {
-          //Route to add car page
-          
+    fetchCarData(id){
+      carService.getById(id).then(car => this.car = car);
+    },
+    transmission(value) {
+      switch(value){
+        case 'automatic':
+          return 'Automatinė';
+        case 'manual':
+          return 'Mechaninė';
+        default:
+          return 'Nežinoma';
+      }
+    },
+    term(value){
+      switch(value){
+        case 'day':
+          return 'Diena';
+        case 'month':
+          return 'Mėnuo';
+        default:
+            return 'Nežinoma';
+      }
+    },
+    fuelType(value) {
+      //Write switch case based on the types in FuelType enum
+      switch(value){
+        case 'gasoline':
+          return 'Benzinas';
+        case 'diesel':
+          return 'Dyzelis';
+        case 'electricity':
+          return 'Elektra';
+        case 'hydrogen':
+          return 'Dujos';
+        case 'gasoline_hydrogen':
+          return 'Benzinas/Dujos';
+        case 'gasoline_electricity':
+          return 'Benzinas/Elektra';
+        default:
+            return 'Nežinomas';
+      }
+    },
+    bodyType(value) {
+      switch(value){
+        case 'hatchback':
+          return 'Hečbekas';
+        case 'truck':
+          return 'Visureigis';
+        case 'pickup':
+          return 'Pikapas';
+        case 'coupe':
+          return 'Kupė';
+        case 'cabriolet':
+          return 'Kabrioletas';
+        case 'sedan':
+          return 'Sedanas';
+        case 'universal':
+          return 'Universalas';
+        case 'minivan':
+          return 'Vienatūris';
+        default:
+            return 'Nežinomas';
+      }
+    },
+    deleteAd(){
+      if(confirm("Ar tikrai norite ištrinti skelbimą?")){
+        var type = this.$route.params.type;
+        type = type.toLowerCase();
+        if(type == 'rent'){
+          rentadService.delete(this.$route.params.id);
+        }else if(type == 'sale'){
+          saleadService.delete(this.$route.params.id);
+        }
+        this.$router.push('/search/');
+      }
+    },
+    state(value) {
+      switch(value){
+        case 'perfect':
+          return 'Be defektų';
+        case 'minimal_damage':
+          return 'Minimalūs gedimai';
+        case 'serious_damage':
+          return 'Rimti gedimai';
+        case 'totalled':
+          return 'Daužtas';
+        default:
+            return 'Nežinoma';
+      }
     }
   }
 };

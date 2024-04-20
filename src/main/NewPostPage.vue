@@ -1,19 +1,19 @@
 <template>
   <div class="forum-post-creation-page">
-    <h1>Sukurti naują įrašą</h1>
+    <h1>{{$route.params.id ? "Atnaujinti įrašą" : "Sukurti naują įrašą"}}</h1>
     <form @submit.prevent="submitPost">
       <div class="form-group">
         <label for="post-title">Pavadinimas:</label>
-        <input id="post-title" v-model="post.title" required>
+        <input id="post-title" v-model="post.Title" required>
       </div>
 
       <div class="form-group">
         <label for="post-content">Turinys:</label>
-        <textarea id="post-content" v-model="post.content" rows="10" required></textarea>
+        <textarea id="post-content" v-model="post.Content" rows="10" required></textarea>
       </div>
 
-      <button type="submit">Kurti įrašą</button>
-      <router-link to="/forum/post">Įrašas</router-link>
+      <button type="submit">{{ $route.params.id ? "Atnaujinti įrašą" : "Sukurti įrašą" }}</button>
+      <router-link :to="'/forum/post/'+$route.params.id" v-if="$route.params.id">Atgal į įrašą</router-link>
     </form>
   </div>
 </template>
@@ -22,55 +22,85 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { postService } from '../_services'
+import { router } from '../_helpers';
 
 export default {
-  data() {
-    return {
-      showFilterPopup: false,
-      post: {
-        title: '',
-        content: ''
-      },
-      cars: [
-        {
-          imageUrl: 'https://static8.depositphotos.com/1010338/960/i/950/depositphotos_9600579-stock-photo-man-driving-imaginary-car.jpg',
-          make:'Kap pastaisyti dusliarkią?',
-          model:'Modelinė',
-          price:'piatras',
-          mileage:'man niaisku'
-        }
-      ], // This should be fetched from your data source
-      userData: {
-        // Fetch or initialize user data here
-      },
-      balanceUpdateInfo: {}
-    };
-  },
-  computed:{
-    ...mapState({
+    data() {
+        return {
+            showFilterPopup: false,
+            post: {
+                Title: '',
+                Content: ''
+            }
+        };
+    },
+    computed: {
+        ...mapState({
             account: state => state.account,
             users: state => state.users.all
         }),
-  },
-  methods: {
-    updateBalance() {
-      // Implement user info update logic
-    }
-  },
-  async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
-  },
-  methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
     },
-    addCar() {
-          //Route to add car page
-          
-    }
-  }
+    async created() {
+        if (this.$route.params.id) {
+            this.getPostData(this.$route.params.id);
+        }
+    },
+    methods: {
+        getPostData(id) {
+            postService.getById(id).then(post => {
+                this.post.Title = post.title;
+                this.post.Content = post.content;
+            });
+        },
+        submitPost() {
+            if (!this.post.Title || !this.post.Content) {
+                alert("Užpildykite visus laukus");
+                return;
+            }
+
+            if(this.$route.params.id){
+                this.updatePost();
+            }else{
+                this.createPost();
+            }
+        },
+        async createPost(){
+            this.post.Author = this.account.user.id;
+            this.post.Title = await this.censor(this.post.Title);
+            postService.create(this.post)
+                .then(post => {
+                this.$router.push('/forum/post/' + post.id);
+            }, error => {
+                this.error = error;
+                this.loading = false;
+            });
+        },
+        async updatePost(){
+            this.post.id = parseInt(this.$route.params.id);
+            this.post.Title = await this.censor(this.post.Title);
+            postService.update(this.post)
+                .then(post => {
+                this.$router.push('/forum/post/' + post.id);
+            }, error => {
+                this.error = error;
+                this.loading = false;
+            });
+        },
+        async censor(content){
+          const response = await fetch(`https://api.api-ninjas.com/v1/profanityfilter?text=${content}`,{
+            method: 'GET',
+            contentType: 'application/json',
+            headers: {
+              'X-Api-Key': '4MT5wwPLrPrY/FAfDRaKcg==VQ5O7lGGri7Jh46K'
+            },
+          });
+          const data = await response.json();
+          console.log(data);
+          return data.censored;
+        }
+    },
+    components: { router }
 };
 </script>
 

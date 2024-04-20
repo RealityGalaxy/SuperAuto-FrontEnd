@@ -1,17 +1,20 @@
 <template>
   <div class="car-listing-page">
-    <router-link to="/forum/newpost">Naujas įrašas</router-link>
 
     <div class="car-list">
-      <div v-for="car in cars" :key="car.id" class="car-item">
+      <div v-for="post in posts" :key="post.id" class="car-item">
         <div class="car-info">
           <h3>
-      <router-link to="/forum/post">{{ car.make }}</router-link></h3>
-          <p>Autorius: {{ car.price }}</p>
-          <p>{{ car.mileage }}</p>
+      <router-link :to="'/forum/post/'+post.id">{{ post.title }}</router-link></h3>
+          <p>Autorius: {{ post.author }}</p>
+          <p>Sukūrimo data: {{ post.creation_Date.substring(0, 10) }}</p>
+          <p>Paskutinį kartą atnaujinta: {{ post.edit_Date.substring(0, 10) }}</p>
+          <p>{{ post.content.substring(0, 100) + (post.content.length < 100 ? "" : "...") }}</p>
         </div>
       </div>
     </div>
+    <br>
+    <router-link to="/forum/newpost">Naujas įrašas</router-link>
   </div>
 </template>
 
@@ -19,37 +22,12 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import { postService } from '../_services'
 
 export default {
   data() {
     return {
-      showFilterPopup: false,
-      filters: {
-        make: '',
-        model: '',
-        licensePlate: '',
-        mileage: null,
-        gearboxType: '',
-        fuelType: '',
-        bodyType: '',
-        seatCount: null,
-        state: '',
-        minPrice: null,
-        maxPrice: null
-      },
-      cars: [
-        {
-          imageUrl: 'https://static8.depositphotos.com/1010338/960/i/950/depositphotos_9600579-stock-photo-man-driving-imaginary-car.jpg',
-          make:'Kap pastaisyti dusliarkią?',
-          model:'Modelinė',
-          price:'piatras',
-          mileage:'man niaisku'
-        }
-      ], // This should be fetched from your data source
-      userData: {
-        // Fetch or initialize user data here
-      },
-      balanceUpdateInfo: {}
+      posts: []
     };
   },
   computed:{
@@ -58,23 +36,14 @@ export default {
             users: state => state.users.all
         }),
   },
-  methods: {
-    updateBalance() {
-      // Implement user info update logic
-    }
-  },
   async created() {
-    // Fetch user data on component creation
-    this.userData = await this.fetchUserData();
-    this.editableUserData = { ...this.userData };
+    this.getAllPosts();
   },
   methods: {
-    fetchUserData() {
-      // Fetch user data from API or store
-    },
-    addCar() {
-          //Route to add car page
-          
+    getAllPosts() {
+      postService.getAll().then(posts => {
+        this.posts = posts;
+      });
     }
   }
 };
